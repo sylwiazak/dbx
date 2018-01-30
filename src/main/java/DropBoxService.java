@@ -12,7 +12,7 @@ public class DropBoxService {
 
     public DropBoxService(String accessToken) {
         DbxRequestConfig config = new DbxRequestConfig("First Dbx");
-        client= new DbxClientV2(config,accessToken);
+        client = new DbxClientV2(config, accessToken);
     }
 
     public void send(File file, String targetPath) throws IOException, DbxException {

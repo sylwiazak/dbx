@@ -6,9 +6,10 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 public class WatcherService {
 
-    DropBoxService dropBoxService;
+    private DropBoxService dropBoxService;
+
     public WatcherService(DropBoxService dropBoxService) {
-        this.dropBoxService= dropBoxService;
+        this.dropBoxService = dropBoxService;
     }
 
     public void watch(String source) throws IOException {
@@ -22,7 +23,7 @@ public class WatcherService {
                 key = watcher.take();
                 @SuppressWarnings("unchecked")
                 WatchEvent<Path> ev = (WatchEvent<Path>) key.pollEvents().get(0);
-                dropBoxService.send(new File(source + "/" + ev.context().getFileName()), "/"+ev.context().getFileName());
+                dropBoxService.send(new File(source + "/" + ev.context().getFileName()), "/" + ev.context().getFileName());
 
                 if (!key.reset()) throw new Exception();
 
