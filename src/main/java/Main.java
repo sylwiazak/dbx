@@ -4,8 +4,8 @@ import java.nio.file.WatchService;
 
 public class Main {
     public static void main(String[] args) {
-
-        WatcherService watcherService= new WatcherService();
+        DropBoxService dropBoxService= new DropBoxService("accessToken");
+        WatcherService watcherService= new WatcherService(dropBoxService);
 
         try {
             watcherService.watch("src\\main\\resources\\source");
