@@ -22,35 +22,43 @@ public class FileTransferHistory {
     public Long getId() {
         return id;
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     @Column(name = "filename")
     public String getName() {
         return name;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Column(name = "sending_date")
     public LocalDate getSendingDate() {
         return sendingDate;
     }
+
+    public void setSendingDate(LocalDate sendingDate) {
+        this.sendingDate = sendingDate;
+    }
+
     @Column(name = "sending_time")
     public Long getSendingTime() {
         return sendingTime;
     }
+
+    public void setSendingTime(Long sendingTime) {
+        this.sendingTime = sendingTime;
+    }
+
     @Column(name = "update_date")
     public LocalDate getUpdateDate() {
         return updateDate;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public void setSendingDate(LocalDate sendingDate) {
-        this.sendingDate = sendingDate;
-    }
-    public void setSendingTime(Long sendingTime) {
-        this.sendingTime = sendingTime;
-    }
     public void setUpdateDate(LocalDate updateDate) {
         this.updateDate = updateDate;
     }

@@ -18,17 +18,17 @@ public class Config {
         this.url = url;
     }
 
-    public SessionFactory sessionFactory(){
+    public SessionFactory sessionFactory() {
         return new Configuration()
                 .addAnnotatedClass(database.FileTransferHistory.class)
                 .setProperty(Environment.DRIVER, "org.postgresql.Driver")
                 .setProperty(URL, url)
                 .setProperty(USER, user)
                 .setProperty(PASS, password)
-                .setProperty(DIALECT,"org.hibernate.dialect.PostgreSQL9Dialect")
-                .setProperty(CURRENT_SESSION_CONTEXT_CLASS,"thread")
+                .setProperty(DIALECT, "org.hibernate.dialect.PostgreSQL9Dialect")
+                .setProperty(CURRENT_SESSION_CONTEXT_CLASS, "thread")
                 .setProperty(SHOW_SQL, Boolean.TRUE.toString())
-                .setProperty(HBM2DDL_AUTO,"update")
+                .setProperty(HBM2DDL_AUTO, "update")
                 .buildSessionFactory();
     }
 }

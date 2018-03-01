@@ -5,12 +5,10 @@ import database.FileTransferHistoryDao;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static java.lang.String.format;
-import static java.lang.System.currentTimeMillis;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 @SuppressWarnings("unchecked")
@@ -36,24 +34,16 @@ public class WatcherService {
             try {
                 WatchKey key = watcher.take();
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    start = currentTimeMillis();
                     WatchEvent<Path> ev = (WatchEvent<Path>) event;
                     fileName = ev.context().getFileName().toString();
-                    List<String> listOfFileNamesInDatabase = fileTransferHistoryDao.getListFile();
-
-                    if (!listOfFileNamesInDatabase.contains(fileName)) {
-                        executorService.submit(new SenderWorker(toFile(source, ev), fileName, dropBoxService));
-                        finish = currentTimeMillis();
-                        fileTransferHistoryDao.addFile(fileName, finish - start);
-                    }
-                    else {
-                        finish = currentTimeMillis();
-                        fileTransferHistoryDao.updateFile(fileName, finish - start);
-                    }
+                    executorService.submit(new SenderWorker(toFile(source, ev), fileName, dropBoxService));
+                    if (fileTransferHistoryDao.getListWithNewFile(fileName).isEmpty())
+                        fileTransferHistoryDao.addFile(fileName);
+                    else
+                        fileTransferHistoryDao.updateFile(fileName);
                 }
                 if (!key.reset()) throw new Exception();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }

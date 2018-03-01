@@ -12,17 +12,17 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class Folder {
-    private List<File> files= new ArrayList<>();
+    private List<File> files = new ArrayList<>();
     private FileTransferHistoryDao fileTransferHistoryDao;
 
     public Folder(FileTransferHistoryDao fileTransferHistoryDao) {
         this.fileTransferHistoryDao = fileTransferHistoryDao;
     }
 
-    public void checkNewFiles(String source){
+    public void checkNewFiles(String source) {
         listFilesForFolder(source);
         for (File file : files) {
-            if(!fileTransferHistoryDao.getListFile().contains(file.getName())){
+            if (fileTransferHistoryDao.getListWithNewFile(file.getName()).isEmpty()) {
                 fileTransferHistoryDao.addFile(file.getName());
             }
         }
@@ -31,8 +31,8 @@ public class Folder {
     private void listFilesForFolder(String source) {
         try (Stream<Path> paths = Files.walk(Paths.get(source))) {
             paths.filter(Files::isRegularFile)
-                    .map(i->new File(i.toString()))
-                    .forEach(i->files.add(i));
+                    .map(i -> new File(i.toString()))
+                    .forEach(i -> files.add(i));
         } catch (IOException e) {
             e.printStackTrace();
         }
