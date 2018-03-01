@@ -12,6 +12,7 @@ public class FileTransferHistory {
     private String name;
     private LocalDate sendingDate;
     private Long sendingTime;
+    private LocalDate updateDate;
 
     public FileTransferHistory() {
     }
@@ -21,20 +22,21 @@ public class FileTransferHistory {
     public Long getId() {
         return id;
     }
-
     @Column(name = "filename")
     public String getName() {
         return name;
     }
-
     @Column(name = "sending_date")
     public LocalDate getSendingDate() {
         return sendingDate;
     }
-
     @Column(name = "sending_time")
     public Long getSendingTime() {
         return sendingTime;
+    }
+    @Column(name = "update_date")
+    public LocalDate getUpdateDate() {
+        return updateDate;
     }
 
     public void setId(Long id) {
@@ -48,5 +50,8 @@ public class FileTransferHistory {
     }
     public void setSendingTime(Long sendingTime) {
         this.sendingTime = sendingTime;
+    }
+    public void setUpdateDate(LocalDate updateDate) {
+        this.updateDate = updateDate;
     }
 }

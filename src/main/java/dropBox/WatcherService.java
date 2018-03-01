@@ -1,16 +1,14 @@
 package dropBox;
 
-import database.FileTransferHistory;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
+import database.FileTransferHistoryDao;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -19,51 +17,53 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 public class WatcherService {
 
     private DropBoxService dropBoxService;
-    private Session session;
+    private FileTransferHistoryDao fileTransferHistoryDao;
     private long start;
     private long finish;
-    private FileTransferHistory fileTransferHistory;
+    private String fileName;
+    private ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    public WatcherService(DropBoxService dropBoxService, Session session) {
+
+    public WatcherService(DropBoxService dropBoxService, FileTransferHistoryDao fileTransferHistoryDao) {
         this.dropBoxService = dropBoxService;
-        this.session = session;
+        this.fileTransferHistoryDao = fileTransferHistoryDao;
 
     }
 
     public void watch(String source) throws IOException {
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        WatchService watcher = FileSystems.getDefault().newWatchService();
-        Path dir = Paths.get(source);
-        dir.register(watcher, ENTRY_CREATE);
+        WatchService watcher = preparingObserver(source);
         while (true) {
             try {
-                Transaction transaction = session.beginTransaction();
-                WatchKey key;
-                key = watcher.take();
+                WatchKey key = watcher.take();
                 for (WatchEvent<?> event : key.pollEvents()) {
                     start = currentTimeMillis();
                     WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                    System.out.println(ev.context().getFileName());
-                    List<FileTransferHistory> fileList = session.createQuery("from FileTransferHistory").getResultList();
-                    List<String> listOfFileNames = fileList.stream().map(FileTransferHistory::getName).collect(Collectors.toList());//stream z nazwami plików, później w ifie zrobić equals
-                    if (!listOfFileNames.contains(ev.context().getFileName().toString())) {
-                        executorService.submit(new SenderWorker(toFile(source, ev), ev.context().getFileName().toString(), dropBoxService));
+                    fileName = ev.context().getFileName().toString();
+                    List<String> listOfFileNamesInDatabase = fileTransferHistoryDao.getListFile();
+
+                    if (!listOfFileNamesInDatabase.contains(fileName)) {
+                        executorService.submit(new SenderWorker(toFile(source, ev), fileName, dropBoxService));
                         finish = currentTimeMillis();
-                        fileTransferHistory = new FileTransferHistory();
-                        fileTransferHistory.setName(ev.context().getFileName().toString());
-                        fileTransferHistory.setSendingDate(LocalDate.now());
-                        fileTransferHistory.setSendingTime(finish - start);
-                        session.save(fileTransferHistory);
+                        fileTransferHistoryDao.addFile(fileName, finish - start);
+                    }
+                    else {
+                        finish = currentTimeMillis();
+                        fileTransferHistoryDao.updateFile(fileName, finish - start);
                     }
                 }
-                session.clear();
-                if (transaction.isActive())
-                    session.getTransaction().commit();
                 if (!key.reset()) throw new Exception();
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private WatchService preparingObserver(String source) throws IOException {
+        WatchService watcher = FileSystems.getDefault().newWatchService();
+        Path dir = Paths.get(source);
+        dir.register(watcher, ENTRY_CREATE);
+        return watcher;
     }
 
     private File toFile(String source, WatchEvent<Path> ev) {
