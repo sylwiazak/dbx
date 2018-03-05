@@ -4,7 +4,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 
 @SuppressWarnings("unchecked")
 public class FileTransferHistoryDao {
@@ -37,21 +37,21 @@ public class FileTransferHistoryDao {
         transaction.commit();
     }
 
-    public void updateFile(String fileName) {
+    public void updateFile(String fileName, Long sendingTime) {
         transaction = session.beginTransaction();
         FileTransferHistory file = (FileTransferHistory) session
                 .createQuery("FROM FileTransferHistory f WHERE f.name = :fileName")
                 .setParameter("fileName", fileName).getSingleResult();
+        file.setSendingTime(sendingTime);
         file.setUpdateDate(LocalDate.now());
         session.saveOrUpdate(file);
         session.flush();
         transaction.commit();
     }
 
-    public List<String> getListWithNewFile(String someFileName) {
-        List<String> list = session.createQuery("select name from FileTransferHistory where name in (:someFileName)")
+    public Optional<String> getNewFile(String someFileName) {
+        return Optional.ofNullable((String) session.createQuery("select name from FileTransferHistory where name in (:someFileName)")
                 .setParameter("someFileName", someFileName)
-                .getResultList();
-        return list;
+                .uniqueResult());
     }
 }

@@ -1,4 +1,5 @@
 import database.Config;
+import database.DataUpdate;
 import database.FileTransferHistoryDao;
 import dropBox.DropBoxService;
 import dropBox.WatcherService;
@@ -7,7 +8,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
 import java.io.IOException;
-
 
 public class Main {
 
@@ -24,8 +24,10 @@ public class Main {
         SessionFactory sessionFactory = config.sessionFactory();
         Session session = sessionFactory.openSession();
         FileTransferHistoryDao fileTransferHistoryDao = new FileTransferHistoryDao(session);
-        WatcherService watcherService = new WatcherService(new DropBoxService(accessToken), fileTransferHistoryDao);
-        Folder folder = new Folder(fileTransferHistoryDao);
+        DropBoxService dropBoxService = new DropBoxService(accessToken);
+        DataUpdate dataUpdate = new DataUpdate(fileTransferHistoryDao);
+        WatcherService watcherService = new WatcherService(dataUpdate, dropBoxService);
+        Folder folder = new Folder(dataUpdate, dropBoxService);
 
         try {
             folder.checkNewFiles(SOURCE);

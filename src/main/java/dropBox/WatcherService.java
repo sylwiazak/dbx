@@ -1,12 +1,10 @@
 package dropBox;
 
-import database.FileTransferHistoryDao;
+import database.DataUpdate;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static java.lang.String.format;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -15,17 +13,12 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 public class WatcherService {
 
     private DropBoxService dropBoxService;
-    private FileTransferHistoryDao fileTransferHistoryDao;
-    private long start;
-    private long finish;
     private String fileName;
-    private ExecutorService executorService = Executors.newFixedThreadPool(4);
+    private DataUpdate dataUpdate;
 
-
-    public WatcherService(DropBoxService dropBoxService, FileTransferHistoryDao fileTransferHistoryDao) {
+    public WatcherService(DataUpdate dataUpdate, DropBoxService dropBoxService) {
         this.dropBoxService = dropBoxService;
-        this.fileTransferHistoryDao = fileTransferHistoryDao;
-
+        this.dataUpdate = dataUpdate;
     }
 
     public void watch(String source) throws IOException {
@@ -36,11 +29,7 @@ public class WatcherService {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent<Path> ev = (WatchEvent<Path>) event;
                     fileName = ev.context().getFileName().toString();
-                    executorService.submit(new SenderWorker(toFile(source, ev), fileName, dropBoxService));
-                    if (fileTransferHistoryDao.getListWithNewFile(fileName).isEmpty())
-                        fileTransferHistoryDao.addFile(fileName);
-                    else
-                        fileTransferHistoryDao.updateFile(fileName);
+                    dataUpdate.addOrUpdate(fileName, new SenderWorker(toFile(source, ev), fileName, dropBoxService));
                 }
                 if (!key.reset()) throw new Exception();
             } catch (Exception ex) {
